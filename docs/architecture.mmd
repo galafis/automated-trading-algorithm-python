@@ -1,0 +1,17 @@
+graph TD
+    A[Dados Historicos] --> B(src/main.py)
+    B --> C{src/strategy.py}
+    C --> D[Sinais de Trading]
+    D --> E[Execucao de Ordens Simulada]
+    E --> F[Resultados/Backtesting]
+    subgraph Componentes Principais
+        B
+        C
+    end
+    subgraph Fluxo de Dados
+        A
+        D
+        E
+        F
+    end
+
