@@ -7,15 +7,17 @@
 ![Scikit-learn](https://img.shields.io/badge/Scikit--learn-orange?style=flat-square&logo=scikit-learn)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
+[English Version](README_en.md)
 
 Este repositório contém um algoritmo de trading automatizado desenvolvido em Python.
+
+## 🖼️ Imagem Hero
 
 ![Imagem Hero](docs/hero_image.png)
 
 ## Estrutura do Projeto
 
 ![Diagrama de Arquitetura](docs/architecture.png)
-
 
 - `src/`: Código fonte principal do algoritmo.
 - `tests/`: Testes unitários para o código.
@@ -51,7 +53,6 @@ python notebooks/example_usage.py
 
 Este script irá buscar dados históricos simulados, aplicar a estratégia de cruzamento de médias móveis e plotar os resultados.
 
-
 ## Licença
 
 Este projeto está licenciado sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
@@ -59,3 +60,4 @@ Este projeto está licenciado sob a licença MIT. Veja o arquivo `LICENSE` para 
 ---
 
 **Autor:** Gabriel Demetrios Lafis
+
