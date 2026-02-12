@@ -1,5 +1,10 @@
 import pandas as pd
-from .strategy import MovingAverageCrossoverStrategy
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.strategy import MovingAverageCrossoverStrategy
 
 def fetch_historical_data(symbol='AAPL', start_date='2023-01-01', end_date='2023-12-31'):
     """Simula a busca de dados históricos de um ativo."""

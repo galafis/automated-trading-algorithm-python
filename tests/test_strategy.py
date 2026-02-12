@@ -1,69 +1,110 @@
-import unittest
+"""
+Unit tests for automated-trading-algorithm-python
+"""
+
+import pytest
 import pandas as pd
+import numpy as np
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.strategy import MovingAverageCrossoverStrategy
+from src.main import fetch_historical_data
 
-class TestMovingAverageCrossoverStrategy(unittest.TestCase):
 
-    def setUp(self):
-        # Dados de teste fictícios
-        self.data = pd.DataFrame({
-            'Close': [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
-        }, index=pd.to_datetime(pd.date_range(start='2023-01-01', periods=50)))
-        self.strategy = MovingAverageCrossoverStrategy(short_window=5, long_window=10)
+@pytest.fixture
+def sample_data():
+    """Generate sample OHLCV data."""
+    dates = pd.date_range('2023-01-01', periods=100, freq='D')
+    np.random.seed(42)
+    prices = 100 + np.cumsum(np.random.randn(100) * 0.5)
+    return pd.DataFrame({
+        'Open': prices + np.random.uniform(-0.5, 0.5, 100),
+        'High': prices + np.abs(np.random.uniform(0, 1, 100)),
+        'Low': prices - np.abs(np.random.uniform(0, 1, 100)),
+        'Close': prices,
+        'Volume': np.random.uniform(1e5, 5e5, 100),
+    }, index=dates)
 
-    def test_generate_signals_columns(self):
-        signals = self.strategy.generate_signals(self.data)
-        self.assertIn('short_mavg', signals.columns)
-        self.assertIn('long_mavg', signals.columns)
-        self.assertIn('action', signals.columns)
 
-    def test_generate_signals_length(self):
-        signals = self.strategy.generate_signals(self.data)
-        self.assertEqual(len(signals), len(self.data))
+@pytest.fixture
+def strategy():
+    return MovingAverageCrossoverStrategy(short_window=5, long_window=10)
 
-    def test_generate_signals_no_nan_in_action(self):
-        signals = self.strategy.generate_signals(self.data)
-        self.assertFalse(signals['action'].isnull().any())
 
-    def test_generate_signals_logic(self):
-        # Testar um cenário específico de cruzamento
-        # short_mavg cruza acima de long_mavg -> Buy
-        # short_mavg cruza abaixo de long_mavg -> Sell
+class TestFetchHistoricalData:
+    def test_returns_dataframe(self):
+        df = fetch_historical_data()
+        assert isinstance(df, pd.DataFrame)
 
-        # Criar dados onde um cruzamento de compra e venda ocorra
-        test_data = pd.DataFrame({
-            'Close': [
-                10, 10, 10, 10, 10, # 5 dias para short_mavg = 10
-                11, 12, 13, 14, 15, # short_mavg começa a subir
-                16, 17, 18, 19, 20, # short_mavg continua subindo
-                19, 18, 17, 16, 15, # short_mavg começa a cair
-                14, 13, 12, 11, 10  # short_mavg continua caindo
-            ]
-        }, index=pd.to_datetime(pd.date_range(start='2023-01-01', periods=25)))
+    def test_has_ohlcv_columns(self):
+        df = fetch_historical_data()
+        for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+            assert col in df.columns
+
+    def test_custom_date_range(self):
+        df = fetch_historical_data(start_date='2023-06-01', end_date='2023-06-30')
+        assert len(df) == 30
+
+
+class TestMovingAverageCrossoverStrategy:
+    def test_generate_signals_columns(self, strategy, sample_data):
+        signals = strategy.generate_signals(sample_data)
+        assert 'short_mavg' in signals.columns
+        assert 'long_mavg' in signals.columns
+        assert 'action' in signals.columns
+
+    def test_signals_same_length_as_data(self, strategy, sample_data):
+        signals = strategy.generate_signals(sample_data)
+        assert len(signals) == len(sample_data)
+
+    def test_no_nan_in_action(self, strategy, sample_data):
+        signals = strategy.generate_signals(sample_data)
+        assert not signals['action'].isnull().any()
+
+    def test_actions_are_valid(self, strategy, sample_data):
+        signals = strategy.generate_signals(sample_data)
+        valid_actions = {'Buy', 'Sell', 'Hold'}
+        assert set(signals['action'].unique()).issubset(valid_actions)
+
+    def test_crossover_generates_buy_and_sell(self):
+        """Price that rises then falls should produce both Buy and Sell signals."""
+        prices = list(range(10, 35)) + list(range(35, 10, -1))
+        data = pd.DataFrame({
+            'Close': prices,
+        }, index=pd.date_range('2023-01-01', periods=len(prices)))
 
         strategy = MovingAverageCrossoverStrategy(short_window=3, long_window=5)
-        signals = strategy.generate_signals(test_data)
+        signals = strategy.generate_signals(data)
 
-        # Esperar um sinal de compra quando short_mavg cruza acima de long_mavg
-        # E um sinal de venda quando short_mavg cruza abaixo de long_mavg
+        assert 'Buy' in signals['action'].values
+        assert 'Sell' in signals['action'].values
 
-        # Exemplo de verificação manual para um ponto específico
-        # No nosso test_data, o cruzamento de compra deve ocorrer por volta do dia 7-9
-        # E o cruzamento de venda por volta do dia 17-19
+    def test_flat_prices_no_trades(self):
+        """Constant price should produce no Buy/Sell signals."""
+        data = pd.DataFrame({
+            'Close': [100.0] * 50,
+        }, index=pd.date_range('2023-01-01', periods=50))
 
-        # Encontrar o primeiro 'Buy' e 'Sell' após as janelas
-        buy_signals = signals[signals['action'] == 'Buy']
-        sell_signals = signals[signals['action'] == 'Sell']
+        strategy = MovingAverageCrossoverStrategy(short_window=5, long_window=10)
+        signals = strategy.generate_signals(data)
 
-        self.assertTrue(len(buy_signals) > 0, "Deveria haver pelo menos um sinal de compra")
-        self.assertTrue(len(sell_signals) > 0, "Deveria haver pelo menos um sinal de venda")
+        trades = signals[signals['action'].isin(['Buy', 'Sell'])]
+        assert len(trades) == 0
 
-        # Verificar se o primeiro sinal de compra ocorre após o período inicial de cálculo das MAs
-        self.assertTrue(buy_signals.index[0] > test_data.index[strategy.long_window - 1])
+    def test_short_window_smaller_than_long(self, strategy):
+        assert strategy.short_window < strategy.long_window
 
-        # Verificar se o primeiro sinal de venda ocorre após o primeiro sinal de compra
-        self.assertTrue(sell_signals.index[0] > buy_signals.index[0])
+    def test_different_window_sizes(self, sample_data):
+        s1 = MovingAverageCrossoverStrategy(short_window=5, long_window=20)
+        s2 = MovingAverageCrossoverStrategy(short_window=10, long_window=30)
+        sig1 = s1.generate_signals(sample_data)
+        sig2 = s2.generate_signals(sample_data)
+        # Different window sizes should produce different moving averages
+        assert not sig1['short_mavg'].equals(sig2['short_mavg'])
 
-if __name__ == '__main__':
-    unittest.main()
 
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

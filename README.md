@@ -1,342 +1,191 @@
-# 📈 Automated Trading Algorithm Python
+# Automated Trading Algorithm (Python)
 
-> Professional Python project implementing Automated Trading Algorithm Python
+Algoritmo de trading automatizado baseado em cruzamento de medias moveis (Moving Average Crossover).
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://img.shields.io/badge/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://img.shields.io/badge/)
-[![NumPy](https://img.shields.io/badge/NumPy-1.26-013243.svg)](https://img.shields.io/badge/)
-[![Pandas](https://img.shields.io/badge/Pandas-2.2-150458.svg)](https://img.shields.io/badge/)
-[![scikit--learn](https://img.shields.io/badge/scikit--learn-1.4-F7931E.svg)](https://img.shields.io/badge/)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB.svg)](https://www.python.org/)
+[![pandas](https://img.shields.io/badge/pandas-2.0+-150458.svg)](https://pandas.pydata.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[English](#english) | [Português](#português)
+[Portugues](#portugues) | [English](#english)
+
+---
+
+## Portugues
+
+### Sobre
+
+Implementacao de uma estrategia de cruzamento de medias moveis (Moving Average Crossover) em Python. O projeto contem:
+
+- **Classe `MovingAverageCrossoverStrategy`** (`src/strategy.py`): calcula medias moveis curta e longa sobre precos de fechamento e gera sinais de Buy, Sell ou Hold com base no cruzamento
+- **Gerador de dados sinteticos** (`src/main.py`): funcao `fetch_historical_data()` que cria dados OHLCV ficticios para testes (nao se conecta a APIs reais)
+- **Exemplo com visualizacao** (`notebooks/example_usage.py`): script que gera sinais e plota o grafico com matplotlib
+
+### Como Usar
+
+```bash
+# Clonar o repositorio
+git clone https://github.com/galafis/automated-trading-algorithm-python.git
+cd automated-trading-algorithm-python
+
+# Criar ambiente virtual
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Executar algoritmo com dados sinteticos
+python src/main.py
+
+# Executar exemplo com grafico
+python notebooks/example_usage.py
+
+# Executar testes
+pytest tests/ -v
+```
+
+### Uso Programatico
+
+```python
+from src.strategy import MovingAverageCrossoverStrategy
+from src.main import fetch_historical_data
+
+# Obter dados (sinteticos ou seus proprios dados com coluna 'Close')
+data = fetch_historical_data(symbol='AAPL', start_date='2023-01-01', end_date='2023-12-31')
+
+# Criar estrategia e gerar sinais
+strategy = MovingAverageCrossoverStrategy(short_window=20, long_window=50)
+signals = strategy.generate_signals(data)
+
+# Ver sinais
+print(signals[signals['action'] != 'Hold'])
+```
+
+### Estrutura do Projeto
+
+```
+automated-trading-algorithm-python/
+├── src/
+│   ├── __init__.py
+│   ├── main.py              # Gerador de dados e ponto de entrada
+│   └── strategy.py          # MovingAverageCrossoverStrategy
+├── notebooks/
+│   └── example_usage.py     # Exemplo com visualizacao matplotlib
+├── tests/
+│   ├── __init__.py
+│   └── test_strategy.py     # 11 testes funcionais
+├── requirements.txt
+├── LICENSE
+└── README.md
+```
+
+### Tecnologias
+
+- **Python 3.9+** — linguagem principal
+- **pandas 2.0+** — manipulacao de dados e series temporais
+- **NumPy 1.23+** — computacao numerica
+- **matplotlib 3.7+** — visualizacao de graficos (no exemplo)
+
+### Limitacoes
+
+- Implementa apenas uma estrategia (cruzamento de medias moveis)
+- Nao inclui backtesting, calculo de metricas de performance (Sharpe, drawdown), ou execucao real de ordens
+- Dados sao sinteticos — nao se conecta a corretoras ou APIs de mercado
+- Nao inclui Docker ou CI/CD
 
 ---
 
 ## English
 
-### 🎯 Overview
+### About
 
-**Automated Trading Algorithm Python** is a production-grade Python application complemented by CSS, HTML, JavaScript that showcases modern software engineering practices including clean architecture, comprehensive testing, containerized deployment, and CI/CD readiness.
+Implementation of a Moving Average Crossover strategy in Python. The project contains:
 
-The codebase comprises **529 lines** of source code organized across **9 modules**, following industry best practices for maintainability, scalability, and code quality.
+- **`MovingAverageCrossoverStrategy` class** (`src/strategy.py`): computes short and long moving averages on close prices and generates Buy, Sell, or Hold signals based on crossover
+- **Synthetic data generator** (`src/main.py`): `fetch_historical_data()` function that creates mock OHLCV data for testing (does not connect to real APIs)
+- **Visualization example** (`notebooks/example_usage.py`): script that generates signals and plots the chart with matplotlib
 
-### ✨ Key Features
-
-- **📈 Strategy Engine**: Multiple trading strategy implementations with configurable parameters
-- **🔄 Backtesting Framework**: Historical data simulation with realistic market conditions
-- **📊 Performance Analytics**: Sharpe ratio, Sortino ratio, maximum drawdown, and more
-- **⚡ Real-time Processing**: Low-latency data processing optimized for market speed
-- **🐳 Containerized**: Docker support for consistent deployment
-- **🏗️ Object-Oriented**: 2 core classes with clean architecture
-
-### 🏗️ Architecture
-
-```mermaid
-graph TB
-    subgraph Data["📊 Market Data"]
-        A[Data Feed]
-        B[Historical Data]
-    end
-    
-    subgraph Engine["⚙️ Analysis Engine"]
-        C[Signal Generation]
-        D[Strategy Logic]
-        E[Risk Assessment]
-    end
-    
-    subgraph Output["📈 Output"]
-        F[Performance Metrics]
-        G[Trade Signals]
-        H[Reports]
-    end
-    
-    A --> C
-    B --> C
-    C --> D --> E
-    E --> F
-    D --> G
-    E --> H
-    
-    style Data fill:#e1f5fe
-    style Engine fill:#f3e5f5
-    style Output fill:#e8f5e9
-```
-
-### 🚀 Quick Start
-
-#### Prerequisites
-
-- Python 3.12+
-- pip (Python package manager)
-
-#### Installation
+### Usage
 
 ```bash
 # Clone the repository
 git clone https://github.com/galafis/automated-trading-algorithm-python.git
 cd automated-trading-algorithm-python
 
-# Create and activate virtual environment
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-#### Running
-
-```bash
-# Run the application
+# Run algorithm with synthetic data
 python src/main.py
+
+# Run visualization example
+python notebooks/example_usage.py
+
+# Run tests
+pytest tests/ -v
 ```
 
-### 🧪 Testing
+### Programmatic Usage
 
-```bash
-# Run all tests
-pytest
+```python
+from src.strategy import MovingAverageCrossoverStrategy
+from src.main import fetch_historical_data
 
-# Run with coverage report
-pytest --cov --cov-report=html
+# Get data (synthetic or your own data with a 'Close' column)
+data = fetch_historical_data(symbol='AAPL', start_date='2023-01-01', end_date='2023-12-31')
 
-# Run specific test module
-pytest tests/test_main.py -v
+# Create strategy and generate signals
+strategy = MovingAverageCrossoverStrategy(short_window=20, long_window=50)
+signals = strategy.generate_signals(data)
 
-# Run with detailed output
-pytest -v --tb=short
+# View signals
+print(signals[signals['action'] != 'Hold'])
 ```
 
-### 📁 Project Structure
+### Project Structure
 
 ```
 automated-trading-algorithm-python/
-├── assets/
-├── docs/          # Documentation
-│   └── generate_hero_image.py
+├── src/
+│   ├── __init__.py
+│   ├── main.py              # Data generator and entry point
+│   └── strategy.py          # MovingAverageCrossoverStrategy
 ├── notebooks/
-│   └── example_usage.py
-├── src/          # Source code
-│   ├── main.py
-│   └── strategy.py
-├── tests/         # Test suite
-│   └── test_strategy.py
-├── CONTRIBUTING.md
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── README_en.md
+│   └── example_usage.py     # Visualization example with matplotlib
+├── tests/
+│   ├── __init__.py
+│   └── test_strategy.py     # 11 functional tests
 ├── requirements.txt
-└── script.js
+├── LICENSE
+└── README.md
 ```
 
-### 📊 Performance Metrics
+### Technologies
 
-The engine calculates comprehensive performance metrics:
+- **Python 3.9+** — core language
+- **pandas 2.0+** — data manipulation and time series
+- **NumPy 1.23+** — numerical computing
+- **matplotlib 3.7+** — chart visualization (in example)
 
-| Metric | Description | Formula |
-|--------|-------------|---------|
-| **Sharpe Ratio** | Risk-adjusted return | (Rp - Rf) / σp |
-| **Sortino Ratio** | Downside risk-adjusted return | (Rp - Rf) / σd |
-| **Max Drawdown** | Maximum peak-to-trough decline | max(1 - Pt/Pmax) |
-| **Win Rate** | Percentage of profitable trades | Wins / Total |
-| **Profit Factor** | Gross profit / Gross loss | ΣProfit / ΣLoss |
-| **Calmar Ratio** | Return / Max Drawdown | CAGR / MDD |
-| **VaR (95%)** | Value at Risk | 5th percentile of returns |
-| **Expected Shortfall** | Conditional VaR | E[R | R < VaR] |
+### Limitations
 
-### 🛠️ Tech Stack
-
-| Technology | Description | Role |
-|------------|-------------|------|
-| **Python** | Core Language | Primary |
-| **Docker** | Containerization platform | Framework |
-| **NumPy** | Numerical computing | Framework |
-| **Pandas** | Data manipulation library | Framework |
-| **scikit-learn** | Machine learning library | Framework |
-| HTML | 2 files | Supporting |
-| JavaScript | 1 files | Supporting |
-| CSS | 1 files | Supporting |
-
-### 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### 👤 Author
-
-**Gabriel Demetrios Lafis**
-- GitHub: [@galafis](https://github.com/galafis)
-- LinkedIn: [Gabriel Demetrios Lafis](https://linkedin.com/in/gabriel-demetrios-lafis)
+- Implements only one strategy (moving average crossover)
+- Does not include backtesting, performance metrics (Sharpe, drawdown), or real order execution
+- Data is synthetic — does not connect to brokers or market APIs
+- Does not include Docker or CI/CD
 
 ---
 
-## Português
-
-### 🎯 Visão Geral
-
-**Automated Trading Algorithm Python** é uma aplicação Python de nível profissional, complementada por CSS, HTML, JavaScript que demonstra práticas modernas de engenharia de software, incluindo arquitetura limpa, testes abrangentes, implantação containerizada e prontidão para CI/CD.
-
-A base de código compreende **529 linhas** de código-fonte organizadas em **9 módulos**, seguindo as melhores práticas do setor para manutenibilidade, escalabilidade e qualidade de código.
-
-### ✨ Funcionalidades Principais
-
-- **📈 Strategy Engine**: Multiple trading strategy implementations with configurable parameters
-- **🔄 Backtesting Framework**: Historical data simulation with realistic market conditions
-- **📊 Performance Analytics**: Sharpe ratio, Sortino ratio, maximum drawdown, and more
-- **⚡ Real-time Processing**: Low-latency data processing optimized for market speed
-- **🐳 Containerized**: Docker support for consistent deployment
-- **🏗️ Object-Oriented**: 2 core classes with clean architecture
-
-### 🏗️ Arquitetura
-
-```mermaid
-graph TB
-    subgraph Data["📊 Market Data"]
-        A[Data Feed]
-        B[Historical Data]
-    end
-    
-    subgraph Engine["⚙️ Analysis Engine"]
-        C[Signal Generation]
-        D[Strategy Logic]
-        E[Risk Assessment]
-    end
-    
-    subgraph Output["📈 Output"]
-        F[Performance Metrics]
-        G[Trade Signals]
-        H[Reports]
-    end
-    
-    A --> C
-    B --> C
-    C --> D --> E
-    E --> F
-    D --> G
-    E --> H
-    
-    style Data fill:#e1f5fe
-    style Engine fill:#f3e5f5
-    style Output fill:#e8f5e9
-```
-
-### 🚀 Início Rápido
-
-#### Prerequisites
-
-- Python 3.12+
-- pip (Python package manager)
-
-#### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/galafis/automated-trading-algorithm-python.git
-cd automated-trading-algorithm-python
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-#### Running
-
-```bash
-# Run the application
-python src/main.py
-```
-
-### 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage report
-pytest --cov --cov-report=html
-
-# Run specific test module
-pytest tests/test_main.py -v
-
-# Run with detailed output
-pytest -v --tb=short
-```
-
-### 📁 Estrutura do Projeto
-
-```
-automated-trading-algorithm-python/
-├── assets/
-├── docs/          # Documentation
-│   └── generate_hero_image.py
-├── notebooks/
-│   └── example_usage.py
-├── src/          # Source code
-│   ├── main.py
-│   └── strategy.py
-├── tests/         # Test suite
-│   └── test_strategy.py
-├── CONTRIBUTING.md
-├── Dockerfile
-├── LICENSE
-├── README.md
-├── README_en.md
-├── requirements.txt
-└── script.js
-```
-
-### 📊 Performance Metrics
-
-The engine calculates comprehensive performance metrics:
-
-| Metric | Description | Formula |
-|--------|-------------|---------|
-| **Sharpe Ratio** | Risk-adjusted return | (Rp - Rf) / σp |
-| **Sortino Ratio** | Downside risk-adjusted return | (Rp - Rf) / σd |
-| **Max Drawdown** | Maximum peak-to-trough decline | max(1 - Pt/Pmax) |
-| **Win Rate** | Percentage of profitable trades | Wins / Total |
-| **Profit Factor** | Gross profit / Gross loss | ΣProfit / ΣLoss |
-| **Calmar Ratio** | Return / Max Drawdown | CAGR / MDD |
-| **VaR (95%)** | Value at Risk | 5th percentile of returns |
-| **Expected Shortfall** | Conditional VaR | E[R | R < VaR] |
-
-### 🛠️ Stack Tecnológica
-
-| Tecnologia | Descrição | Papel |
-|------------|-----------|-------|
-| **Python** | Core Language | Primary |
-| **Docker** | Containerization platform | Framework |
-| **NumPy** | Numerical computing | Framework |
-| **Pandas** | Data manipulation library | Framework |
-| **scikit-learn** | Machine learning library | Framework |
-| HTML | 2 files | Supporting |
-| JavaScript | 1 files | Supporting |
-| CSS | 1 files | Supporting |
-
-### 🤝 Contribuindo
-
-Contribuições são bem-vindas! Sinta-se à vontade para enviar um Pull Request.
-
-### 📄 Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-### 👤 Autor
+## Autor / Author
 
 **Gabriel Demetrios Lafis**
 - GitHub: [@galafis](https://github.com/galafis)
 - LinkedIn: [Gabriel Demetrios Lafis](https://linkedin.com/in/gabriel-demetrios-lafis)
+
+## Licenca / License
+
+MIT License - veja [LICENSE](LICENSE) para detalhes / see [LICENSE](LICENSE) for details.
