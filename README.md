@@ -61,6 +61,18 @@ signals = strategy.generate_signals(data)
 print(signals[signals['action'] != 'Hold'])
 ```
 
+### Arquitetura
+
+```mermaid
+graph TD
+    A["main.py<br/>Ponto de Entrada"] --> B["fetch_historical_data()<br/>OHLCV Sintetico"]
+    B --> C["MovingAverageCrossoverStrategy<br/>(strategy.py)"]
+    C --> D["SMA Curta + SMA Longa"]
+    D --> E["Sinais Buy / Sell / Hold"]
+    F["example_usage.py"] --> C
+    F --> G["Visualizacao matplotlib"]
+```
+
 ### Estrutura do Projeto
 
 ```
@@ -144,6 +156,18 @@ signals = strategy.generate_signals(data)
 
 # View signals
 print(signals[signals['action'] != 'Hold'])
+```
+
+### Architecture
+
+```mermaid
+graph TD
+    A["main.py<br/>Entry Point"] --> B["fetch_historical_data()<br/>Synthetic OHLCV"]
+    B --> C["MovingAverageCrossoverStrategy<br/>(strategy.py)"]
+    C --> D["Short SMA + Long SMA"]
+    D --> E["Buy / Sell / Hold Signals"]
+    F["example_usage.py"] --> C
+    F --> G["matplotlib Visualization"]
 ```
 
 ### Project Structure
