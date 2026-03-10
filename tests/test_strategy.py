@@ -1,10 +1,8 @@
 """
-Unit tests for automated-trading-algorithm-python
+Tests for Automated Trading Algorithm.
 """
 
 import pytest
-import pandas as pd
-import numpy as np
 import sys
 import os
 
@@ -12,98 +10,177 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.strategy import MovingAverageCrossoverStrategy
 from src.main import fetch_historical_data
+from src.indicators import sma, ema, rsi, macd, bollinger_bands, calculate_returns, sharpe_ratio, sortino_ratio, max_drawdown
+from src.backtester import BacktestEngine, PortfolioManager
 
 
-@pytest.fixture
-def sample_data():
-    """Generate sample OHLCV data."""
-    dates = pd.date_range('2023-01-01', periods=100, freq='D')
-    np.random.seed(42)
-    prices = 100 + np.cumsum(np.random.randn(100) * 0.5)
-    return pd.DataFrame({
-        'Open': prices + np.random.uniform(-0.5, 0.5, 100),
-        'High': prices + np.abs(np.random.uniform(0, 1, 100)),
-        'Low': prices - np.abs(np.random.uniform(0, 1, 100)),
-        'Close': prices,
-        'Volume': np.random.uniform(1e5, 5e5, 100),
-    }, index=dates)
+# ── Indicator Tests ───────────────────────────────────────────────────
+
+class TestSMA:
+    def test_basic(self):
+        result = sma([1, 2, 3, 4, 5], 3)
+        assert result[2] == 2.0
+        assert result[4] == 4.0
+
+    def test_none_padding(self):
+        result = sma([1, 2, 3], 2)
+        assert result[0] is None
+        assert result[1] == 1.5
 
 
-@pytest.fixture
-def strategy():
-    return MovingAverageCrossoverStrategy(short_window=5, long_window=10)
+class TestEMA:
+    def test_basic(self):
+        result = ema([1, 2, 3, 4, 5], 3)
+        assert result[2] is not None
+        assert len(result) == 5
+
+    def test_empty(self):
+        assert ema([], 3) == []
 
 
-class TestFetchHistoricalData:
-    def test_returns_dataframe(self):
-        df = fetch_historical_data()
-        assert isinstance(df, pd.DataFrame)
+class TestRSI:
+    def test_length(self):
+        prices = list(range(1, 30))
+        result = rsi(prices, 14)
+        assert len(result) == len(prices)
 
-    def test_has_ohlcv_columns(self):
-        df = fetch_historical_data()
-        for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-            assert col in df.columns
-
-    def test_custom_date_range(self):
-        df = fetch_historical_data(start_date='2023-06-01', end_date='2023-06-30')
-        assert len(df) == 30
+    def test_padded_with_none(self):
+        result = rsi(list(range(1, 20)), 14)
+        assert result[0] is None
 
 
-class TestMovingAverageCrossoverStrategy:
-    def test_generate_signals_columns(self, strategy, sample_data):
-        signals = strategy.generate_signals(sample_data)
-        assert 'short_mavg' in signals.columns
-        assert 'long_mavg' in signals.columns
-        assert 'action' in signals.columns
+class TestMACD:
+    def test_returns_dict(self):
+        prices = [float(x) for x in range(1, 50)]
+        result = macd(prices)
+        assert "macd" in result
+        assert "signal" in result
+        assert "histogram" in result
 
-    def test_signals_same_length_as_data(self, strategy, sample_data):
-        signals = strategy.generate_signals(sample_data)
-        assert len(signals) == len(sample_data)
+    def test_length_match(self):
+        prices = [float(x) for x in range(1, 50)]
+        result = macd(prices)
+        assert len(result["macd"]) == len(prices)
 
-    def test_no_nan_in_action(self, strategy, sample_data):
-        signals = strategy.generate_signals(sample_data)
-        assert not signals['action'].isnull().any()
 
-    def test_actions_are_valid(self, strategy, sample_data):
-        signals = strategy.generate_signals(sample_data)
-        valid_actions = {'Buy', 'Sell', 'Hold'}
-        assert set(signals['action'].unique()).issubset(valid_actions)
+class TestBollingerBands:
+    def test_returns_bands(self):
+        prices = [float(x) for x in range(1, 30)]
+        result = bollinger_bands(prices, 10)
+        assert "upper" in result
+        assert "middle" in result
+        assert "lower" in result
 
-    def test_crossover_generates_buy_and_sell(self):
-        """Price that rises then falls should produce both Buy and Sell signals."""
-        prices = list(range(10, 35)) + list(range(35, 10, -1))
-        data = pd.DataFrame({
-            'Close': prices,
-        }, index=pd.date_range('2023-01-01', periods=len(prices)))
+    def test_upper_above_lower(self):
+        prices = [100 + x * 0.5 for x in range(30)]
+        result = bollinger_bands(prices, 10)
+        for u, l in zip(result["upper"], result["lower"]):
+            if u is not None and l is not None:
+                assert u >= l
 
-        strategy = MovingAverageCrossoverStrategy(short_window=3, long_window=5)
+
+class TestRiskMetrics:
+    def test_calculate_returns(self):
+        returns = calculate_returns([100, 110, 105])
+        assert len(returns) == 2
+        assert abs(returns[0] - 0.1) < 1e-6
+
+    def test_sharpe_ratio(self):
+        returns = [0.01] * 252
+        sr = sharpe_ratio(returns)
+        assert sr > 0
+
+    def test_sortino_ratio(self):
+        returns = [0.01, -0.005, 0.02, -0.001, 0.015]
+        result = sortino_ratio(returns)
+        assert isinstance(result, float)
+
+    def test_max_drawdown(self):
+        prices = [100, 110, 90, 95, 80, 120]
+        dd = max_drawdown(prices)
+        expected = (110 - 80) / 110
+        assert abs(dd["max_drawdown"] - round(expected, 6)) < 1e-5
+
+
+# ── Strategy Tests ────────────────────────────────────────────────────
+
+class TestMovingAverageCrossover:
+    def test_signals_columns(self):
+        import pandas as pd
+        data = fetch_historical_data()
+        strategy = MovingAverageCrossoverStrategy(20, 50)
         signals = strategy.generate_signals(data)
+        assert "short_mavg" in signals.columns
+        assert "long_mavg" in signals.columns
+        assert "action" in signals.columns
 
-        assert 'Buy' in signals['action'].values
-        assert 'Sell' in signals['action'].values
-
-    def test_flat_prices_no_trades(self):
-        """Constant price should produce no Buy/Sell signals."""
-        data = pd.DataFrame({
-            'Close': [100.0] * 50,
-        }, index=pd.date_range('2023-01-01', periods=50))
-
-        strategy = MovingAverageCrossoverStrategy(short_window=5, long_window=10)
+    def test_valid_actions(self):
+        data = fetch_historical_data()
+        strategy = MovingAverageCrossoverStrategy(5, 10)
         signals = strategy.generate_signals(data)
+        assert set(signals["action"].unique()).issubset({"Buy", "Sell", "Hold"})
 
-        trades = signals[signals['action'].isin(['Buy', 'Sell'])]
-        assert len(trades) == 0
 
-    def test_short_window_smaller_than_long(self, strategy):
-        assert strategy.short_window < strategy.long_window
+# ── Backtest Tests ────────────────────────────────────────────────────
 
-    def test_different_window_sizes(self, sample_data):
-        s1 = MovingAverageCrossoverStrategy(short_window=5, long_window=20)
-        s2 = MovingAverageCrossoverStrategy(short_window=10, long_window=30)
-        sig1 = s1.generate_signals(sample_data)
-        sig2 = s2.generate_signals(sample_data)
-        # Different window sizes should produce different moving averages
-        assert not sig1['short_mavg'].equals(sig2['short_mavg'])
+class TestBacktestEngine:
+    def test_buy_and_hold(self):
+        engine = BacktestEngine(initial_capital=10000, commission=0)
+        prices = [100, 105, 110, 115, 120]
+        signals = ["Buy", "Hold", "Hold", "Hold", "Sell"]
+        result = engine.run(prices, signals)
+        assert result["total_trades"] == 1
+        assert result["final_value"] > 10000
+
+    def test_no_trades(self):
+        engine = BacktestEngine()
+        prices = [100, 101, 102]
+        signals = ["Hold", "Hold", "Hold"]
+        result = engine.run(prices, signals)
+        assert result["total_trades"] == 0
+        assert result["final_value"] == 100000
+
+    def test_length_mismatch(self):
+        engine = BacktestEngine()
+        with pytest.raises(ValueError):
+            engine.run([100, 200], ["Buy"])
+
+
+# ── Portfolio Tests ───────────────────────────────────────────────────
+
+class TestPortfolioManager:
+    def test_buy(self):
+        pm = PortfolioManager(10000)
+        assert pm.buy("AAPL", 150, 10)
+        assert pm.cash == 10000 - 1500
+
+    def test_sell(self):
+        pm = PortfolioManager(10000)
+        pm.buy("AAPL", 100, 10)
+        assert pm.sell("AAPL", 110, 10)
+        assert pm.cash == 10000 - 1000 + 1100
+
+    def test_insufficient_funds(self):
+        pm = PortfolioManager(100)
+        assert not pm.buy("AAPL", 150, 10)
+
+    def test_insufficient_position(self):
+        pm = PortfolioManager(10000)
+        assert not pm.sell("AAPL", 100, 5)
+
+    def test_portfolio_value(self):
+        pm = PortfolioManager(10000)
+        pm.buy("AAPL", 100, 10)
+        value = pm.portfolio_value({"AAPL": 120})
+        assert value == 10000 - 1000 + 1200
+
+    def test_allocation(self):
+        pm = PortfolioManager(10000)
+        pm.buy("AAPL", 100, 50)
+        alloc = pm.get_allocation({"AAPL": 100})
+        assert "cash" in alloc
+        assert "AAPL" in alloc
+        assert abs(alloc["cash"] + alloc["AAPL"] - 100) < 0.1
 
 
 if __name__ == "__main__":

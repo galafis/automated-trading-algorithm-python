@@ -1,215 +1,126 @@
 # Automated Trading Algorithm (Python)
 
-Algoritmo de trading automatizado baseado em cruzamento de medias moveis (Moving Average Crossover).
-
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB.svg)](https://www.python.org/)
-[![pandas](https://img.shields.io/badge/pandas-2.0+-150458.svg)](https://pandas.pydata.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Portugues](#portugues) | [English](#english)
+Framework de algoritmos de trading automatizado. Motor de backtesting, indicadores tecnicos (SMA, EMA, RSI, MACD, Bollinger Bands), gerenciamento de portfolio, metricas de risco (Sharpe, Sortino, max drawdown) e simulacao de execucao de ordens.
+
+Automated trading algorithm framework. Backtesting engine, technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), portfolio management, risk metrics (Sharpe, Sortino, max drawdown), and order execution simulation.
 
 ---
 
-## Portugues
+## Arquitetura / Architecture
 
-### Sobre
+```mermaid
+graph TB
+    subgraph Data["Dados de Mercado"]
+        D1[Historical Prices]
+        D2[OHLCV Data]
+    end
 
-Implementacao de uma estrategia de cruzamento de medias moveis (Moving Average Crossover) em Python. O projeto contem:
+    subgraph Indicators["Indicadores Tecnicos"]
+        I1[SMA / EMA]
+        I2[RSI]
+        I3[MACD]
+        I4[Bollinger Bands]
+    end
 
-- **Classe `MovingAverageCrossoverStrategy`** (`src/strategy.py`): calcula medias moveis curta e longa sobre precos de fechamento e gera sinais de Buy, Sell ou Hold com base no cruzamento
-- **Gerador de dados sinteticos** (`src/main.py`): funcao `fetch_historical_data()` que cria dados OHLCV ficticios para testes (nao se conecta a APIs reais)
-- **Exemplo com visualizacao** (`notebooks/example_usage.py`): script que gera sinais e plota o grafico com matplotlib
+    subgraph Strategy["Estrategia"]
+        S1[Moving Average Crossover]
+        S2[Signal Generation]
+    end
 
-### Como Usar
+    subgraph Engine["Motor de Execucao"]
+        E1[BacktestEngine]
+        E2[PortfolioManager]
+    end
 
-```bash
-# Clonar o repositorio
-git clone https://github.com/galafis/automated-trading-algorithm-python.git
-cd automated-trading-algorithm-python
+    subgraph Metrics["Metricas de Risco"]
+        M1[Sharpe Ratio]
+        M2[Sortino Ratio]
+        M3[Max Drawdown]
+    end
 
-# Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Executar algoritmo com dados sinteticos
-python src/main.py
-
-# Executar exemplo com grafico
-python notebooks/example_usage.py
-
-# Executar testes
-pytest tests/ -v
+    D1 --> I1
+    D1 --> I2
+    D1 --> I3
+    D1 --> I4
+    D2 --> S1
+    I1 --> S1
+    S1 --> S2
+    S2 --> E1
+    E1 --> E2
+    E1 --> M1
+    E1 --> M2
+    E1 --> M3
 ```
 
-### Uso Programatico
+## Fluxo de Backtest / Backtest Flow
+
+```mermaid
+sequenceDiagram
+    participant Data
+    participant Strategy
+    participant Engine as BacktestEngine
+    participant Portfolio as PortfolioManager
+
+    Data->>Strategy: Historical prices
+    Strategy->>Strategy: Calculate indicators
+    Strategy-->>Engine: Buy/Sell/Hold signals
+    loop Each bar
+        Engine->>Engine: Check signal
+        alt Buy Signal
+            Engine->>Portfolio: buy(symbol, price, qty)
+        else Sell Signal
+            Engine->>Portfolio: sell(symbol, price, qty)
+        end
+        Engine->>Engine: Update equity curve
+    end
+    Engine-->>Data: Performance report
+```
+
+## Funcionalidades / Features
+
+| Funcionalidade / Feature | Descricao / Description |
+|---|---|
+| SMA / EMA | Medias moveis simples e exponencial / Simple and Exponential Moving Averages |
+| RSI | Indice de Forca Relativa / Relative Strength Index |
+| MACD | Convergencia/Divergencia de Medias Moveis / Moving Average Convergence Divergence |
+| Bollinger Bands | Bandas de volatilidade / Volatility bands |
+| BacktestEngine | Motor de simulacao de estrategias / Strategy simulation engine |
+| PortfolioManager | Gerenciamento multi-ativo / Multi-asset portfolio management |
+| Risk Metrics | Sharpe, Sortino, Max Drawdown |
+
+## Inicio Rapido / Quick Start
 
 ```python
-from src.strategy import MovingAverageCrossoverStrategy
 from src.main import fetch_historical_data
+from src.strategy import MovingAverageCrossoverStrategy
+from src.backtester import BacktestEngine
+from src.indicators import rsi, macd
 
-# Obter dados (sinteticos ou seus proprios dados com coluna 'Close')
-data = fetch_historical_data(symbol='AAPL', start_date='2023-01-01', end_date='2023-12-31')
-
-# Criar estrategia e gerar sinais
+data = fetch_historical_data()
 strategy = MovingAverageCrossoverStrategy(short_window=20, long_window=50)
 signals = strategy.generate_signals(data)
 
-# Ver sinais
-print(signals[signals['action'] != 'Hold'])
+engine = BacktestEngine(initial_capital=100000, commission=0.001)
+result = engine.run(data["Close"].tolist(), signals["action"].tolist())
+print(f"Return: {result['total_return']:.2%}")
+print(f"Sharpe: {result['sharpe_ratio']:.4f}")
 ```
 
-### Arquitetura
-
-```mermaid
-graph TD
-    A["main.py<br/>Ponto de Entrada"] --> B["fetch_historical_data()<br/>OHLCV Sintetico"]
-    B --> C["MovingAverageCrossoverStrategy<br/>(strategy.py)"]
-    C --> D["SMA Curta + SMA Longa"]
-    D --> E["Sinais Buy / Sell / Hold"]
-    F["example_usage.py"] --> C
-    F --> G["Visualizacao matplotlib"]
-```
-
-### Estrutura do Projeto
-
-```
-automated-trading-algorithm-python/
-├── src/
-│   ├── __init__.py
-│   ├── main.py              # Gerador de dados e ponto de entrada
-│   └── strategy.py          # MovingAverageCrossoverStrategy
-├── notebooks/
-│   └── example_usage.py     # Exemplo com visualizacao matplotlib
-├── tests/
-│   ├── __init__.py
-│   └── test_strategy.py     # 11 testes funcionais
-├── requirements.txt
-├── LICENSE
-└── README.md
-```
-
-### Tecnologias
-
-- **Python 3.9+** — linguagem principal
-- **pandas 2.0+** — manipulacao de dados e series temporais
-- **NumPy 1.23+** — computacao numerica
-- **matplotlib 3.7+** — visualizacao de graficos (no exemplo)
-
-### Limitacoes
-
-- Implementa apenas uma estrategia (cruzamento de medias moveis)
-- Nao inclui backtesting, calculo de metricas de performance (Sharpe, drawdown), ou execucao real de ordens
-- Dados sao sinteticos — nao se conecta a corretoras ou APIs de mercado
-- Nao inclui Docker ou CI/CD
-
----
-
-## English
-
-### About
-
-Implementation of a Moving Average Crossover strategy in Python. The project contains:
-
-- **`MovingAverageCrossoverStrategy` class** (`src/strategy.py`): computes short and long moving averages on close prices and generates Buy, Sell, or Hold signals based on crossover
-- **Synthetic data generator** (`src/main.py`): `fetch_historical_data()` function that creates mock OHLCV data for testing (does not connect to real APIs)
-- **Visualization example** (`notebooks/example_usage.py`): script that generates signals and plots the chart with matplotlib
-
-### Usage
+## Testes / Tests
 
 ```bash
-# Clone the repository
-git clone https://github.com/galafis/automated-trading-algorithm-python.git
-cd automated-trading-algorithm-python
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run algorithm with synthetic data
-python src/main.py
-
-# Run visualization example
-python notebooks/example_usage.py
-
-# Run tests
 pytest tests/ -v
 ```
 
-### Programmatic Usage
+## Tecnologias / Technologies
 
-```python
-from src.strategy import MovingAverageCrossoverStrategy
-from src.main import fetch_historical_data
-
-# Get data (synthetic or your own data with a 'Close' column)
-data = fetch_historical_data(symbol='AAPL', start_date='2023-01-01', end_date='2023-12-31')
-
-# Create strategy and generate signals
-strategy = MovingAverageCrossoverStrategy(short_window=20, long_window=50)
-signals = strategy.generate_signals(data)
-
-# View signals
-print(signals[signals['action'] != 'Hold'])
-```
-
-### Architecture
-
-```mermaid
-graph TD
-    A["main.py<br/>Entry Point"] --> B["fetch_historical_data()<br/>Synthetic OHLCV"]
-    B --> C["MovingAverageCrossoverStrategy<br/>(strategy.py)"]
-    C --> D["Short SMA + Long SMA"]
-    D --> E["Buy / Sell / Hold Signals"]
-    F["example_usage.py"] --> C
-    F --> G["matplotlib Visualization"]
-```
-
-### Project Structure
-
-```
-automated-trading-algorithm-python/
-├── src/
-│   ├── __init__.py
-│   ├── main.py              # Data generator and entry point
-│   └── strategy.py          # MovingAverageCrossoverStrategy
-├── notebooks/
-│   └── example_usage.py     # Visualization example with matplotlib
-├── tests/
-│   ├── __init__.py
-│   └── test_strategy.py     # 11 functional tests
-├── requirements.txt
-├── LICENSE
-└── README.md
-```
-
-### Technologies
-
-- **Python 3.9+** — core language
-- **pandas 2.0+** — data manipulation and time series
-- **NumPy 1.23+** — numerical computing
-- **matplotlib 3.7+** — chart visualization (in example)
-
-### Limitations
-
-- Implements only one strategy (moving average crossover)
-- Does not include backtesting, performance metrics (Sharpe, drawdown), or real order execution
-- Data is synthetic — does not connect to brokers or market APIs
-- Does not include Docker or CI/CD
-
----
-
-## Autor / Author
-
-**Gabriel Demetrios Lafis**
-- GitHub: [@galafis](https://github.com/galafis)
-- LinkedIn: [Gabriel Demetrios Lafis](https://linkedin.com/in/gabriel-demetrios-lafis)
+- Python 3.9+
+- pandas, numpy
+- pytest
 
 ## Licenca / License
 
-MIT License - veja [LICENSE](LICENSE) para detalhes / see [LICENSE](LICENSE) for details.
+MIT License - veja [LICENSE](LICENSE) / see [LICENSE](LICENSE).
