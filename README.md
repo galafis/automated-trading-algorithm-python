@@ -2,6 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](Dockerfile)
 
 Framework de algoritmos de trading automatizado. Motor de backtesting, indicadores tecnicos (SMA, EMA, RSI, MACD, Bollinger Bands), gerenciamento de portfolio, metricas de risco (Sharpe, Sortino, max drawdown) e simulacao de execucao de ordens.
 
