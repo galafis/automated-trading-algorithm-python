@@ -1,8 +1,12 @@
 # Automated Trading Algorithm (Python)
 
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker)](Dockerfile)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+![License-MIT](https://img.shields.io/badge/License--MIT-yellow?style=for-the-badge)
+
 
 Framework de algoritmos de trading automatizado. Motor de backtesting, indicadores tecnicos (SMA, EMA, RSI, MACD, Bollinger Bands), gerenciamento de portfolio, metricas de risco (Sharpe, Sortino, max drawdown) e simulacao de execucao de ordens.
 
